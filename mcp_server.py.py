@@ -30,3 +30,38 @@ def get_denial_reason(claim_id: str) -> dict:
 
 if __name__ == "__main__":
     mcp.run(transport="stdio")
+
+%%writefile test_client.py
+import asyncio, sys, nest_asyncio
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+nest_asyncio.apply()
+
+async def main():
+    server_params = StdioServerParameters(
+        command=sys.executable,
+        args=["mcp_server.py"],
+    )
+    errlog = open("server_stderr.log", "w")
+    async with stdio_client(server_params, errlog=errlog) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+
+            print("=== Tools discovered ===")
+            tools_response = await session.list_tools()
+            for t in tools_response.tools:
+                print(f"- {t.name}")
+
+            print("\n=== check_claim_status('CLM5001') ===")
+            result = await session.call_tool("check_claim_status", {"claim_id": "CLM5001"})
+            print(result.content[0].text)
+
+            print("\n=== check_eligibility('M1001') ===")
+            result = await session.call_tool("check_eligibility", {"member_id": "M1001"})
+            print(result.content[0].text)
+
+            print("\n=== get_denial_reason('CLM5001') ===")
+            result = await session.call_tool("get_denial_reason", {"claim_id": "CLM5001"})
+            print(result.content[0].text)
+
+asyncio.run(main())
