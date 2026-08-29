@@ -11,7 +11,7 @@ def create_tables(conn):
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS claims (
-        claim_id MTEXT PRIMARY KEY,
+        claim_id TEXT PRIMARY KEY,
         member_id TEXT NOT NULL,
         patient_name TEXT NOT NULL,
         service_date TEXT NOT NULL,
